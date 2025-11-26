@@ -1,5 +1,6 @@
 
 import React from "react";
+import { useState, useEffect } from "react";
 import { Layout, Menu, Button } from "antd";
 import {
   HomeOutlined,
@@ -15,6 +16,20 @@ const { Sider } = Layout;
 
 function AppSider({ selectedKey = "home" }) {
   const navigate = useNavigate();
+
+  const [isAuthenticated, setIsAuthenticated] = useState(
+    !!localStorage.getItem("token")
+  );
+
+  useEffect(() => {
+    const handleStorage = (e) => {
+      if (e.key === "token") {
+        setIsAuthenticated(!!e.newValue);
+      }
+    };
+    window.addEventListener("storage", handleStorage);
+    return () => window.removeEventListener("storage", handleStorage);
+  }, []);
 
   const menuItems = [
     {
@@ -51,7 +66,8 @@ function AppSider({ selectedKey = "home" }) {
 
   const handleLogout = () => {
     localStorage.removeItem("token");
-    navigate("/login");
+    setIsAuthenticated(false);
+    navigate("/");
   };
 
   return (
@@ -59,10 +75,10 @@ function AppSider({ selectedKey = "home" }) {
       width={240}
       className="flex flex-col"
       theme="light"
-      style={{ backgroundColor: "#ff7b92" }} 
+      style={{ backgroundColor: "#ff7b92" }}
     >
       <div className="h-20 flex items-center justify-center border-b"
-           style={{ borderColor: "rgba(255,255,255,0.4)" }}>
+        style={{ borderColor: "rgba(255,255,255,0.4)" }}>
         <span className="text-white text-lg font-semibold tracking-wide">
           学びシェアBox
         </span>
@@ -82,7 +98,7 @@ function AppSider({ selectedKey = "home" }) {
         />
       </div>
 
-      <div className="px-4 pb-6">
+      {isAuthenticated && <div className="px-4 pb-6">
         <Button
           block
           type="text"
@@ -96,6 +112,7 @@ function AppSider({ selectedKey = "home" }) {
           ログアウト
         </Button>
       </div>
+      }
     </Sider>
   );
 }
