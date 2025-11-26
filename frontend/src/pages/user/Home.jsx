@@ -35,7 +35,7 @@ function Home() {
 
   return (
     <DefaultLayout selectedKey="home" title="ホーム">
-      <div className="max-w-3xl mx-auto space-y-4">
+      <div className="mx-auto px-4 space-y-4">
         <Card className="rounded-2xl shadow-sm border-0">
           <Title level={3} className="!mb-0 text-red-500">
             おかえり！

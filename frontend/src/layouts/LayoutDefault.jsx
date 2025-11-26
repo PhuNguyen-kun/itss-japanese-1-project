@@ -1,4 +1,3 @@
-// src/layouts/DefaultLayout.jsx
 import React from "react";
 import { Layout } from "antd";
 import AppSider from "../components/AppSider";
@@ -14,7 +13,7 @@ function DefaultLayout({ children, selectedKey = "home", title = "" }) {
       <Layout>
         <AppHeader title={title} />
 
-        <Content className="p-8">
+        <Content className="p-2">
           {children}
         </Content>
       </Layout>
