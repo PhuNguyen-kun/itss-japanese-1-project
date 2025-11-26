@@ -1,4 +1,3 @@
-// src/components/AppHeader.jsx
 import React, { useState, useEffect } from "react";
 import { Layout, Typography, Avatar, Space, Button, Badge, message } from "antd";
 import { UserOutlined } from "@ant-design/icons";
@@ -40,7 +39,6 @@ function AppHeader({ title = "ホーム", userName = "ユーザー名" }) {
 
   return (
     <Header
-      // dùng style để override màu dark mặc định của AntD
       style={{
         backgroundColor: "#f5f7fb",
         display: "flex",
@@ -53,21 +51,18 @@ function AppHeader({ title = "ホーム", userName = "ユーザー名" }) {
       }}
       className="shadow-sm"
     >
-      {/* Bên trái: tiêu đề */}
       <div>
         <Text strong style={{ fontSize: 18, color: "#374151" }}>
           {title}
         </Text>
       </div>
 
-      {/* Bên phải: user info / login buttons */}
       <div className="flex items-center gap-4">
         {isAuthenticated ? (
           <Space size="middle" align="center">
             <Avatar icon={<UserOutlined />} />
             <Text strong>{userName}</Text>
             <Badge count={7} />
-            {/* Nếu không muốn nút logout ở đây (vì đã có ở sider) thì có thể xoá nút này */}
             <Button size="small" onClick={handleLogout}>
               ログアウト
             </Button>

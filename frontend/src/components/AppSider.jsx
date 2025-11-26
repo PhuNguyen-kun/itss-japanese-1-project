@@ -1,4 +1,4 @@
-// src/components/AppSider.jsx
+
 import React from "react";
 import { Layout, Menu, Button } from "antd";
 import {
@@ -59,9 +59,8 @@ function AppSider({ selectedKey = "home" }) {
       width={240}
       className="flex flex-col"
       theme="light"
-      style={{ backgroundColor: "#ff7b92" }} // 🎨 đỏ hồng
+      style={{ backgroundColor: "#ff7b92" }} 
     >
-      {/* logo / title */}
       <div className="h-20 flex items-center justify-center border-b"
            style={{ borderColor: "rgba(255,255,255,0.4)" }}>
         <span className="text-white text-lg font-semibold tracking-wide">
@@ -69,7 +68,6 @@ function AppSider({ selectedKey = "home" }) {
         </span>
       </div>
 
-      {/* menu */}
       <div className="flex-1 overflow-hidden">
         <Menu
           mode="inline"
@@ -80,12 +78,10 @@ function AppSider({ selectedKey = "home" }) {
             borderRight: "none",
             padding: "16px 12px",
           }}
-          // custom màu item
           inlineIndent={16}
         />
       </div>
 
-      {/* logout dưới cùng */}
       <div className="px-4 pb-6">
         <Button
           block
