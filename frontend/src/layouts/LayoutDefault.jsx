@@ -10,12 +10,10 @@ function DefaultLayout({ children, selectedKey = "home", title = "" }) {
     <Layout className="min-h-screen bg-[#f5f7fb]">
       <AppSider selectedKey={selectedKey} />
 
-      <Layout>
+      <Layout style={{ marginLeft: "240px" }}>
         <AppHeader title={title} />
 
-        <Content className="p-2">
-          {children}
-        </Content>
+        <Content className="p-2">{children}</Content>
       </Layout>
     </Layout>
   );

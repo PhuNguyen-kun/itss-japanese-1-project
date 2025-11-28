@@ -15,7 +15,7 @@ class AuthService {
     });
 
     if (existingUsername) {
-      throw new BadRequestError("Username already exists");
+      throw new BadRequestError("このユーザー名は既に使用されています。");
     }
 
     // Check if email already exists
@@ -24,14 +24,15 @@ class AuthService {
     });
 
     if (existingEmail) {
-      throw new BadRequestError("Email already exists");
+      throw new BadRequestError("このメールアドレスは既に使用されています。");
     }
 
     const user = await db.User.create({
       username: userData.username,
       email: userData.email,
       password: userData.password,
-      full_name: userData.full_name,
+      first_name: userData.firstName,
+      last_name: userData.lastName,
       department_id: userData.department_id || null,
       role: userData.role || USER_ROLES.TEACHER,
       avatar_url: userData.avatar_url || null,
@@ -55,17 +56,21 @@ class AuthService {
     const user = await db.User.findOne({ where: { username } });
 
     if (!user) {
-      throw new UnauthorizedError("Invalid username or password");
+      throw new UnauthorizedError(
+        "ユーザー名またはパスワードが間違っています。"
+      );
     }
 
     if (user.status !== "active") {
-      throw new UnauthorizedError("Account is inactive");
+      throw new UnauthorizedError("アカウントがアクティブではありません。");
     }
 
     const isPasswordValid = await user.comparePassword(password);
 
     if (!isPasswordValid) {
-      throw new UnauthorizedError("Invalid username or password");
+      throw new UnauthorizedError(
+        "ユーザー名またはパスワードが間違っています。"
+      );
     }
 
     const token = JwtHelper.generateToken({

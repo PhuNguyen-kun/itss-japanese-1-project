@@ -65,3 +65,23 @@ button:focus-visible {
     background-color: #f9f9f9;
   }
 }
+
+/* Khắc phục lỗi Autofill: Màu nền và Màu chữ */
+.login-input-group input:-webkit-autofill,
+.login-input-group input:-webkit-autofill:hover,
+.login-input-group input:-webkit-autofill:active {
+  -webkit-box-shadow: 0 0 0 1000px #ffffff inset;
+  -webkit-text-fill-color: #333 !important;
+  transition: background-color 5000s ease-in-out 0s;
+}
+
+.login-input-group input:-webkit-autofill:focus {
+  -webkit-box-shadow: 0 0 0 1000px #ffffff inset;
+  -webkit-text-fill-color: #333 !important; 
+  color: #333 !important; 
+  caret-color: #333 !important;
+}
+
+.login-input-group input {
+  color: #333 !important;
+}

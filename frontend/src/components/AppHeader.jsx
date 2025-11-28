@@ -1,41 +1,13 @@
-import React, { useState, useEffect } from "react";
-import { Layout, Typography, Avatar, Space, Button, Badge, message } from "antd";
+import React from "react";
+import { Layout, Typography, Avatar, Space } from "antd";
 import { UserOutlined } from "@ant-design/icons";
-import { useNavigate } from "react-router-dom";
+import { useAuth } from "../contexts/AuthContext";
 
 const { Header } = Layout;
 const { Text } = Typography;
 
-function AppHeader({ title = "ホーム", userName = "ユーザー名" }) {
-  const navigate = useNavigate();
-  const [isAuthenticated, setIsAuthenticated] = useState(
-    !!localStorage.getItem("token")
-  );
-
-  useEffect(() => {
-    const handleStorage = (e) => {
-      if (e.key === "token") {
-        setIsAuthenticated(!!e.newValue);
-      }
-    };
-    window.addEventListener("storage", handleStorage);
-    return () => window.removeEventListener("storage", handleStorage);
-  }, []);
-
-  const handleLogin = () => {
-    navigate("/login");
-  };
-
-  const handleRegister = () => {
-    navigate("/register");
-  };
-
-  const handleLogout = () => {
-    localStorage.removeItem("token");
-    setIsAuthenticated(false);
-    message.success("ログアウトしました。");
-    navigate("/login");
-  };
+function AppHeader({ title = "ホーム" }) {
+  const { user } = useAuth();
 
   return (
     <Header
@@ -58,23 +30,10 @@ function AppHeader({ title = "ホーム", userName = "ユーザー名" }) {
       </div>
 
       <div className="flex items-center gap-4">
-        {isAuthenticated ? (
-          <Space size="middle" align="center">
-            <Avatar icon={<UserOutlined />} />
-            <Text strong>{userName}</Text>
-            <Badge count={7} />
-            <Button size="small" onClick={handleLogout}>
-              ログアウト
-            </Button>
-          </Space>
-        ) : (
-          <Space>
-            <Button onClick={handleLogin}>ログイン</Button>
-            <Button type="primary" onClick={handleRegister}>
-              新規登録
-            </Button>
-          </Space>
-        )}
+        <Space size="middle" align="center">
+          <Avatar icon={<UserOutlined />} />
+          <Text strong>{user?.username || "ユーザー名"}</Text>
+        </Space>
       </div>
     </Header>
   );

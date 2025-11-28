@@ -1,7 +1,5 @@
-
 import React from "react";
-import { useState, useEffect } from "react";
-import { Layout, Menu, Button } from "antd";
+import { Layout, Menu, Button, message } from "antd";
 import {
   HomeOutlined,
   BookOutlined,
@@ -11,25 +9,13 @@ import {
   LogoutOutlined,
 } from "@ant-design/icons";
 import { useNavigate } from "react-router-dom";
+import { useAuth } from "../contexts/AuthContext";
 
 const { Sider } = Layout;
 
 function AppSider({ selectedKey = "home" }) {
   const navigate = useNavigate();
-
-  const [isAuthenticated, setIsAuthenticated] = useState(
-    !!localStorage.getItem("token")
-  );
-
-  useEffect(() => {
-    const handleStorage = (e) => {
-      if (e.key === "token") {
-        setIsAuthenticated(!!e.newValue);
-      }
-    };
-    window.addEventListener("storage", handleStorage);
-    return () => window.removeEventListener("storage", handleStorage);
-  }, []);
+  const { logout } = useAuth();
 
   const menuItems = [
     {
@@ -64,55 +50,100 @@ function AppSider({ selectedKey = "home" }) {
     },
   ];
 
-  const handleLogout = () => {
-    localStorage.removeItem("token");
-    setIsAuthenticated(false);
-    navigate("/");
+  const handleLogout = async () => {
+    await logout();
+    message.success("ログアウトしました。");
+    navigate("/login");
   };
 
   return (
     <Sider
       width={240}
-      className="flex flex-col"
-      theme="light"
-      style={{ backgroundColor: "#ff7b92" }}
+      style={{
+        backgroundColor: "#FF6767",
+        display: "flex",
+        flexDirection: "column",
+        height: "100vh",
+        position: "fixed",
+        left: 0,
+        top: 0,
+        bottom: 0,
+      }}
     >
-      <div className="h-20 flex items-center justify-center border-b"
-        style={{ borderColor: "rgba(255,255,255,0.4)" }}>
-        <span className="text-white text-lg font-semibold tracking-wide">
+      {/* Header */}
+      <div
+        style={{
+          height: "80px",
+          display: "flex",
+          alignItems: "center",
+          justifyContent: "center",
+          borderBottom: "1px solid rgba(255,255,255,0.4)",
+          flexShrink: 0,
+        }}
+      >
+        <span
+          style={{
+            color: "white",
+            fontSize: "18px",
+            fontWeight: "600",
+            letterSpacing: "0.05em",
+          }}
+        >
           学びシェアBox
         </span>
       </div>
 
-      <div className="flex-1 overflow-hidden">
-        <Menu
-          mode="inline"
-          selectedKeys={[selectedKey]}
-          items={menuItems}
-          style={{
-            background: "transparent",
-            borderRight: "none",
-            padding: "16px 12px",
-          }}
-          inlineIndent={16}
-        />
-      </div>
+      {/* Menu Container - Takes remaining space */}
+      <div
+        style={{
+          flex: "1",
+          display: "flex",
+          flexDirection: "column",
+          overflow: "hidden",
+          justifyContent: "flex-end",
+          height: "calc(100vh - 90px)",
+        }}
+      >
+        {/* Menu Items */}
+        <div style={{ flex: "1", overflow: "auto" }}>
+          <Menu
+            mode="inline"
+            selectedKeys={[selectedKey]}
+            items={menuItems}
+            style={{
+              background: "transparent",
+              borderRight: "none",
+              padding: "16px 12px",
+              height: "100%",
+            }}
+            theme="dark"
+            inlineIndent={16}
+            className="sidebar-menu"
+          />
+        </div>
 
-      {isAuthenticated && <div className="px-4 pb-6">
-        <Button
-          block
-          type="text"
-          icon={<LogoutOutlined />}
-          onClick={handleLogout}
-          className="!flex !items-center !justify-start !text-white !rounded-xl !px-4 !py-2"
+        <div
           style={{
-            backgroundColor: "rgba(255,255,255,0.18)",
+            padding: "16px",
+            flexShrink: 0,
+            marginTop: "auto",
           }}
         >
-          ログアウト
-        </Button>
+          <Button
+            block
+            type="text"
+            icon={<LogoutOutlined />}
+            onClick={handleLogout}
+            className="!flex !items-center !justify-start !text-white !rounded-xl !px-4 !py-2"
+            style={{
+              backgroundColor: "rgba(255,255,255,0.18)",
+              border: "none",
+            }}
+          >
+            ログアウト
+          </Button>
+        </div>
       </div>
-      }
     </Sider>
   );
 }
