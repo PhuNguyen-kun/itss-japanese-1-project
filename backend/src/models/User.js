@@ -7,7 +7,7 @@ module.exports = (sequelize, DataTypes) => {
     static associate(models) {
       User.belongsTo(models.Department, {
         foreignKey: "department_id",
-        as: "department", 
+        as: "department",
       });
     }
   }
@@ -43,8 +43,12 @@ module.exports = (sequelize, DataTypes) => {
         type: DataTypes.STRING(255),
         allowNull: false,
       },
-      full_name: {
-        type: DataTypes.STRING(100),
+      first_name: {
+        type: DataTypes.STRING(50),
+        allowNull: false,
+      },
+      last_name: {
+        type: DataTypes.STRING(50),
         allowNull: false,
       },
       role: {
@@ -55,7 +59,7 @@ module.exports = (sequelize, DataTypes) => {
         type: DataTypes.STRING(255),
         allowNull: true,
         validate: {
-          isUrl: true, 
+          isUrl: true,
         },
       },
       status: {

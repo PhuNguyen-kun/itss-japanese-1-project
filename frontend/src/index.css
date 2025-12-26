@@ -1,3 +1,12 @@
+@import "tailwindcss";
+
+html,
+body {
+  height: 100%;
+  margin: 0;
+  padding: 0;
+}
+
 :root {
   font-family: system-ui, Avenir, Helvetica, Arial, sans-serif;
   line-height: 1.5;
@@ -5,12 +14,15 @@
 
   color-scheme: light dark;
   color: rgba(255, 255, 255, 0.87);
-  background-color: #242424;
+  background-color: #f5f7fb;
 
   font-synthesis: none;
   text-rendering: optimizeLegibility;
   -webkit-font-smoothing: antialiased;
   -moz-osx-font-smoothing: grayscale;
+
+  /* Theme colors */
+  --theme-color: #ff6767;
 }
 
 a {
@@ -23,11 +35,12 @@ a:hover {
 }
 
 body {
-  margin: 0;
-  display: flex;
-  place-items: center;
   min-width: 320px;
-  min-height: 100vh;
+  background-color: #f5f7fb;
+}
+
+#root {
+  min-height: 100%;
 }
 
 h1 {
@@ -65,4 +78,29 @@ button:focus-visible {
   button {
     background-color: #f9f9f9;
   }
+}
+
+/* Khắc phục lỗi Autofill: Màu nền và Màu chữ */
+.login-input-group input:-webkit-autofill,
+.login-input-group input:-webkit-autofill:hover,
+.login-input-group input:-webkit-autofill:active {
+  -webkit-box-shadow: 0 0 0 1000px #ffffff inset;
+  -webkit-text-fill-color: #333 !important;
+  transition: background-color 5000s ease-in-out 0s;
+}
+
+.login-input-group input:-webkit-autofill:focus {
+  -webkit-box-shadow: 0 0 0 1000px #ffffff inset;
+  -webkit-text-fill-color: #333 !important;
+  color: #333 !important;
+  caret-color: #333 !important;
+}
+
+.login-input-group input {
+  color: #333 !important;
+}
+
+/* Custom Ant Design */
+.notification-card-custom {
+  padding: 10px !important;
 }
