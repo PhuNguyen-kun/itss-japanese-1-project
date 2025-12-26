@@ -7,13 +7,15 @@ const { Content } = Layout;
 
 function DefaultLayout({ children, selectedKey = "home", title = "" }) {
   return (
-    <Layout className="min-h-screen bg-[#f5f7fb]">
+    <Layout style={{ minHeight: "100vh", backgroundColor: "#f5f7fb" }}>
       <AppSider selectedKey={selectedKey} />
 
-      <Layout style={{ marginLeft: "240px" }}>
+      <Layout style={{ marginLeft: "240px", backgroundColor: "#f5f7fb" }}>
         <AppHeader title={title} />
 
-        <Content className="p-2">{children}</Content>
+        <Content className="p-2" style={{ backgroundColor: "#f5f7fb" }}>
+          {children}
+        </Content>
       </Layout>
     </Layout>
   );

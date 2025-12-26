@@ -1,41 +1,42 @@
 import React, { useState, useEffect } from "react";
-import { Card, Typography, Spin, message } from "antd";
+import { Card, Typography, Spin, message, Button } from "antd";
+import { PlusOutlined } from "@ant-design/icons";
 import DefaultLayout from "../../layouts/LayoutDefault";
 import StoryCard from "../../components/StoryCard";
-import DocumentCard from "../../components/DocumentCard";
 import CommentModal from "../../components/CommentModal";
+import CreateStoryModal from "../../components/CreateStoryModal";
 import EditStoryModal from "../../components/EditStoryModal";
-import { storyApi, reactionApi, documentApi, savedStoryApi } from "../../api";
+import { storyApi, reactionApi, savedStoryApi } from "../../api";
 import { useAuth } from "../../contexts/AuthContext";
 
 const { Title } = Typography;
 
-function Home() {
+function Story() {
   const { user } = useAuth();
   const [stories, setStories] = useState([]);
-  const [documents, setDocuments] = useState([]);
   const [loading, setLoading] = useState(true);
   const [selectedStory, setSelectedStory] = useState(null);
   const [modalVisible, setModalVisible] = useState(false);
+  const [createModalVisible, setCreateModalVisible] = useState(false);
   const [editModalVisible, setEditModalVisible] = useState(false);
   const [storyToEdit, setStoryToEdit] = useState(null);
   const [savedStoryIds, setSavedStoryIds] = useState(new Set());
 
   useEffect(() => {
-    loadData();
-  }, []);
+    if (user?.id) {
+      loadStories();
+    }
+  }, [user]);
 
-  const loadData = async () => {
+  const loadStories = async () => {
+    if (!user?.id) return;
     setLoading(true);
     try {
-      const [storiesResponse, documentsResponse, savedStoriesResponse] =
-        await Promise.all([
-          storyApi.getAll(),
-          documentApi.getAll({ limit: 50 }),
-          savedStoryApi.getAll(),
-        ]);
+      const [storiesResponse, savedStoriesResponse] = await Promise.all([
+        storyApi.getAll({ user_id: user.id }),
+        savedStoryApi.getAll(),
+      ]);
       setStories(storiesResponse.data || []);
-      setDocuments(documentsResponse.data || []);
 
       // Extract saved story IDs
       const savedIds = new Set(
@@ -45,7 +46,7 @@ function Home() {
       );
       setSavedStoryIds(savedIds);
     } catch (error) {
-      message.error("データの読み込みに失敗しました");
+      message.error("ストーリーの読み込みに失敗しました");
     } finally {
       setLoading(false);
     }
@@ -56,7 +57,7 @@ function Home() {
     setModalVisible(true);
   };
 
-  const handleStoryReactionClick = async (story, reactionType) => {
+  const handleReactionClick = async (story, reactionType) => {
     // Save current scroll position
     const currentScrollY = window.scrollY;
 
@@ -133,11 +134,6 @@ function Home() {
     }
   };
 
-  const handleDocumentReactionClick = async (document, reactionType) => {
-    // Documents don't support reactions yet - need migration to add "document" to reaction target_type enum
-    message.info("ドキュメントへのリアクションは現在サポートされていません");
-  };
-
   const handleModalClose = () => {
     setModalVisible(false);
     setSelectedStory(null);
@@ -150,6 +146,24 @@ function Home() {
         s.id === storyId ? { ...s, comment_count: newCommentCount } : s
       )
     );
+  };
+
+  const handleCreateSuccess = () => {
+    setCreateModalVisible(false);
+    loadStories();
+    message.success("ストーリーを投稿しました");
+  };
+
+  const handleEditClick = (story) => {
+    setStoryToEdit(story);
+    setEditModalVisible(true);
+  };
+
+  const handleEditSuccess = () => {
+    setEditModalVisible(false);
+    setStoryToEdit(null);
+    loadStories();
+    message.success("ストーリーを更新しました");
   };
 
   const handleSaveToggle = async (story) => {
@@ -174,83 +188,61 @@ function Home() {
     }
   };
 
-  const handleEditClick = (story) => {
-    setStoryToEdit(story);
-    setEditModalVisible(true);
-  };
-
-  const handleEditSuccess = () => {
-    setEditModalVisible(false);
-    setStoryToEdit(null);
-    loadData(); // Reload data to show updated story
-  };
-
   return (
-    <DefaultLayout selectedKey="home" title="ホーム">
+    <DefaultLayout selectedKey="stories" title="ストーリー">
       <div className="mx-auto px-4" style={{ maxWidth: "900px" }}>
-        {/* Greeting Card */}
-        <Card
-          className="rounded-2xl shadow-sm border-0 mb-6"
-          style={{ marginBottom: "10px" }}
-        >
-          <Title level={3} className="!mb-0 text-red-500">
-            おかえり！
+        {/* Header with Create Button */}
+        <div className="flex justify-between items-center mb-6 mt-4">
+          <Title level={3} className="!mb-0">
+            新しいストーリー
           </Title>
-        </Card>
+          <Button
+            type="primary"
+            icon={<PlusOutlined />}
+            size="large"
+            onClick={() => setCreateModalVisible(true)}
+            style={{
+              backgroundColor: "#4a90e2",
+              borderColor: "#4a90e2",
+              borderRadius: "15px",
+            }}
+          >
+            + ストーリーを追加
+          </Button>
+        </div>
 
-        {/* Stories and Documents List */}
+        {/* Stories List */}
         {loading ? (
           <div className="text-center py-8">
             <Spin size="large" />
           </div>
-        ) : stories.length === 0 && documents.length === 0 ? (
+        ) : stories.length === 0 ? (
           <Card className="rounded-2xl shadow-sm border border-gray-200 text-center py-8">
-            <p className="text-gray-500">まだコンテンツがありません</p>
+            <p className="text-gray-500">まだストーリーがありません</p>
+            <Button
+              type="primary"
+              icon={<PlusOutlined />}
+              onClick={() => setCreateModalVisible(true)}
+              className="mt-4"
+            >
+              ストーリーを追加
+            </Button>
           </Card>
         ) : (
           <div>
-            {/* Combine and sort by created_at */}
-            {[...stories, ...documents]
-              .sort((a, b) => {
-                const dateA = new Date(a.created_at || a.createdAt || 0);
-                const dateB = new Date(b.created_at || b.createdAt || 0);
-                return dateB - dateA;
-              })
-              .map((item) => {
-                if (item.title && item.content !== undefined) {
-                  // It's a story
-                  return (
-                    <StoryCard
-                      key={`story-${item.id}`}
-                      story={item}
-                      onCommentClick={handleCommentClick}
-                      onReactionClick={(storyObj, reactionType) =>
-                        handleStoryReactionClick(storyObj, reactionType)
-                      }
-                      onSaveToggle={handleSaveToggle}
-                      isSaved={savedStoryIds.has(item.id)}
-                      onEditClick={
-                        item.author?.id === user?.id ||
-                        item.user_id === user?.id
-                          ? handleEditClick
-                          : undefined
-                      }
-                    />
-                  );
-                } else {
-                  // It's a document
-                  return (
-                    <DocumentCard
-                      key={`document-${item.id}`}
-                      document={item}
-                      onCommentClick={handleCommentClick}
-                      onReactionClick={(docObj, reactionType) =>
-                        handleDocumentReactionClick(docObj, reactionType)
-                      }
-                    />
-                  );
+            {stories.map((story) => (
+              <StoryCard
+                key={story.id}
+                story={story}
+                onCommentClick={handleCommentClick}
+                onReactionClick={(storyObj, reactionType) =>
+                  handleReactionClick(storyObj, reactionType)
                 }
-              })}
+                onEditClick={handleEditClick}
+                onSaveToggle={handleSaveToggle}
+                isSaved={savedStoryIds.has(story.id)}
+              />
+            ))}
           </div>
         )}
 
@@ -260,6 +252,13 @@ function Home() {
           story={selectedStory}
           onClose={handleModalClose}
           onUpdate={handleCommentUpdate}
+        />
+
+        {/* Create Story Modal */}
+        <CreateStoryModal
+          visible={createModalVisible}
+          onClose={() => setCreateModalVisible(false)}
+          onSuccess={handleCreateSuccess}
         />
 
         {/* Edit Story Modal */}
@@ -277,4 +276,4 @@ function Home() {
   );
 }
 
-export default Home;
+export default Story;
