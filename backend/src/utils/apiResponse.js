@@ -11,6 +11,21 @@ const responseOk = (
   });
 };
 
+const responseOkWithPagination = (
+  res,
+  data = null,
+  pagination = null,
+  message = "Success",
+  statusCode = 200
+) => {
+  return res.status(statusCode).json({
+    success: true,
+    message,
+    data,
+    pagination,
+  });
+};
+
 const responseError = (
   res,
   message = "Error occurred",
@@ -24,4 +39,4 @@ const responseError = (
   });
 };
 
-module.exports = { responseOk, responseError };
+module.exports = { responseOk, responseOkWithPagination, responseError };
