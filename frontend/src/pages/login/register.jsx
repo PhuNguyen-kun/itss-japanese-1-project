@@ -1,5 +1,6 @@
 import { useState } from "react";
 import { useNavigate } from "react-router-dom";
+import { message } from "antd";
 import { useAuth } from "../../contexts/AuthContext";
 import { MESSAGES } from "../../constants/messages";
 import "./Login.css";
@@ -56,6 +57,48 @@ export default function Register() {
       setPasswordStrength("strong");
       setPasswordHint(MESSAGES.PASSWORD_STRENGTH.STRONG);
     }
+  };
+
+  // Generate secure password
+  const generatePassword = () => {
+    const length = 12;
+    const uppercase = "ABCDEFGHIJKLMNOPQRSTUVWXYZ";
+    const lowercase = "abcdefghijklmnopqrstuvwxyz";
+    const numbers = "0123456789";
+    const symbols = "!@#$%^&*";
+
+    const allChars = uppercase + lowercase + numbers + symbols;
+
+    // Ensure at least 2 types of characters (backend requirement)
+    let generatedPassword = "";
+    generatedPassword +=
+      uppercase[Math.floor(Math.random() * uppercase.length)];
+    generatedPassword +=
+      lowercase[Math.floor(Math.random() * lowercase.length)];
+    generatedPassword += numbers[Math.floor(Math.random() * numbers.length)];
+    generatedPassword += symbols[Math.floor(Math.random() * symbols.length)];
+
+    // Fill the rest randomly
+    for (let i = generatedPassword.length; i < length; i++) {
+      generatedPassword +=
+        allChars[Math.floor(Math.random() * allChars.length)];
+    }
+
+    // Shuffle the password
+    generatedPassword = generatedPassword
+      .split("")
+      .sort(() => Math.random() - 0.5)
+      .join("");
+
+    // Set password and confirm password
+    setPassword(generatedPassword);
+    setConfirmPassword(generatedPassword);
+    checkPasswordStrength(generatedPassword);
+
+    // Copy to clipboard
+    navigator.clipboard.writeText(generatedPassword).then(() => {
+      message.success(MESSAGES.UI.PASSWORD_GENERATED);
+    });
   };
 
   const handleRegister = async (e) => {
@@ -247,7 +290,29 @@ export default function Register() {
                 checkPasswordStrength(e.target.value);
               }}
               required
+              style={{ paddingRight: "80px" }}
             />
+            <button
+              type="button"
+              className="password-generate-btn"
+              onClick={generatePassword}
+              title={MESSAGES.UI.GENERATE_PASSWORD}
+            >
+              <svg
+                width="18"
+                height="18"
+                viewBox="0 0 24 24"
+                fill="none"
+                stroke="#555"
+                strokeWidth="2"
+                strokeLinecap="round"
+                strokeLinejoin="round"
+              >
+                <rect x="3" y="11" width="18" height="11" rx="2" ry="2"></rect>
+                <path d="M7 11V7a5 5 0 0 1 9.9-.8"></path>
+                <polyline points="12 3 12 7 15 7"></polyline>
+              </svg>
+            </button>
             <button
               type="button"
               className="password-toggle-btn"

@@ -58,9 +58,22 @@ module.exports = (sequelize, DataTypes) => {
       avatar_url: {
         type: DataTypes.STRING(255),
         allowNull: true,
-        validate: {
-          isUrl: true,
-        },
+      },
+      bio: {
+        type: DataTypes.TEXT,
+        allowNull: true,
+      },
+      current_job: {
+        type: DataTypes.STRING(255),
+        allowNull: true,
+      },
+      work_experience: {
+        type: DataTypes.TEXT,
+        allowNull: true,
+      },
+      specialization: {
+        type: DataTypes.STRING(255),
+        allowNull: true,
       },
       status: {
         type: DataTypes.ENUM("active", "inactive"),

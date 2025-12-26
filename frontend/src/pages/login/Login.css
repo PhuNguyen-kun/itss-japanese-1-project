@@ -92,6 +92,36 @@
   outline: none;
   background-color: rgba(0, 0, 0, 0.1);
 }
+
+.password-generate-btn {
+  background: none;
+  border: none;
+  cursor: pointer;
+  padding: 4px;
+  margin-right: 4px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: 4px;
+  transition: all 0.2s;
+}
+
+.password-generate-btn:hover {
+  background-color: rgba(255, 106, 106, 0.1);
+}
+
+.password-generate-btn:hover svg {
+  stroke: #ff6a6a;
+}
+
+.password-generate-btn:focus {
+  outline: none;
+  background-color: rgba(255, 106, 106, 0.15);
+}
+
+.password-generate-btn:active {
+  transform: scale(0.95);
+}
 .login-icon {
   margin-right: 10px;
   font-size: 18px;

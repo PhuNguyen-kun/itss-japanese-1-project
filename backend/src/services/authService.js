@@ -89,13 +89,122 @@ class AuthService {
   async getProfile(userId) {
     const user = await db.User.findByPk(userId, {
       attributes: { exclude: ["password"] },
+      include: [
+        {
+          model: db.Department,
+          as: "department",
+          attributes: ["id", "name"],
+        },
+      ],
     });
 
     if (!user) {
       throw new NotFoundError("User not found");
     }
 
-    return user;
+    // Get user's story count
+    const storyCount = await db.Story.count({
+      where: { user_id: userId },
+    });
+
+    // Get user's saved stories count
+    const savedStoryCount = await db.SavedStory.count({
+      where: { user_id: userId },
+    });
+
+    // Get followers count
+    const followersCount = await db.Follow.count({
+      where: { following_id: userId },
+    });
+
+    // Get following count
+    const followingCount = await db.Follow.count({
+      where: { follower_id: userId },
+    });
+
+    return {
+      ...user.toJSON(),
+      story_count: storyCount,
+      saved_story_count: savedStoryCount,
+      followers_count: followersCount,
+      following_count: followingCount,
+    };
+  }
+
+  async getUserById(userId) {
+    const user = await db.User.findByPk(userId, {
+      attributes: { exclude: ["password"] },
+      include: [
+        {
+          model: db.Department,
+          as: "department",
+          attributes: ["id", "name"],
+        },
+      ],
+    });
+
+    if (!user) {
+      throw new NotFoundError("ユーザーが見つかりません");
+    }
+
+    // Get user's story count
+    const storyCount = await db.Story.count({
+      where: { user_id: userId },
+    });
+
+    // Get user's saved stories count
+    const savedStoryCount = await db.SavedStory.count({
+      where: { user_id: userId },
+    });
+
+    // Get followers count
+    const followersCount = await db.Follow.count({
+      where: { following_id: userId },
+    });
+
+    // Get following count
+    const followingCount = await db.Follow.count({
+      where: { follower_id: userId },
+    });
+
+    return {
+      ...user.toJSON(),
+      story_count: storyCount,
+      saved_story_count: savedStoryCount,
+      followers_count: followersCount,
+      following_count: followingCount,
+    };
+  }
+
+  async updateProfile(userId, profileData) {
+    const user = await db.User.findByPk(userId);
+
+    if (!user) {
+      throw new NotFoundError("ユーザーが見つかりません");
+    }
+
+    // Update allowed fields
+    const allowedFields = [
+      "first_name",
+      "last_name",
+      "bio",
+      "current_job",
+      "work_experience",
+      "specialization",
+      "department_id",
+      "avatar_url",
+    ];
+
+    const updateData = {};
+    allowedFields.forEach((field) => {
+      if (profileData[field] !== undefined) {
+        updateData[field] = profileData[field];
+      }
+    });
+
+    await user.update(updateData);
+
+    return user.toJSON();
   }
 }
 

@@ -39,6 +39,9 @@ export const MESSAGES = {
     LASTNAME_PLACEHOLDER: "姓",
     SHOW_PASSWORD: "パスワードを表示",
     HIDE_PASSWORD: "パスワードを非表示",
+    GENERATE_PASSWORD: "パスワードを生成",
+    PASSWORD_GENERATED:
+      "パスワードが生成され、クリップボードにコピーされました！",
     HAVE_ACCOUNT: "すでにアカウントをお持ちですか？",
     NO_ACCOUNT: "アカウントをお持ちでありませんか？",
     CREATE_ACCOUNT: "作成する",
