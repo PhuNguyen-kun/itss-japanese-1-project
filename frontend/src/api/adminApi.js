@@ -1,28 +1,4 @@
-import axios from "axios";
-
-const API_BASE_URL = "http://localhost:3000/api";
-
-// Create axios instance with default config
-const apiClient = axios.create({
-  baseURL: API_BASE_URL,
-  headers: {
-    "Content-Type": "application/json",
-  },
-});
-
-// Add request interceptor to attach token
-apiClient.interceptors.request.use(
-  (config) => {
-    const token = localStorage.getItem("token");
-    if (token) {
-      config.headers.Authorization = `Bearer ${token}`;
-    }
-    return config;
-  },
-  (error) => {
-    return Promise.reject(error);
-  }
-);
+import { apiClient } from "./axiosConfig";
 
 // Admin API functions
 export const adminApi = {
@@ -66,7 +42,9 @@ export const adminApi = {
 
   // Toggle user status (suspend/activate)
   toggleUserStatus: async (userId) => {
-    const response = await apiClient.patch(`/admin/users/${userId}/toggle-status`);
+    const response = await apiClient.patch(
+      `/admin/users/${userId}/toggle-status`
+    );
     return response.data;
   },
 
@@ -114,7 +92,9 @@ export const adminApi = {
 
   // Toggle pin topic
   togglePinTopic: async (topicId) => {
-    const response = await apiClient.patch(`/admin/topics/${topicId}/toggle-pin`);
+    const response = await apiClient.patch(
+      `/admin/topics/${topicId}/toggle-pin`
+    );
     return response.data;
   },
 
@@ -134,4 +114,3 @@ export const adminApi = {
 };
 
 export default adminApi;
-

@@ -117,3 +117,80 @@ Server will run on `http://localhost:3000`
 - `npx sequelize-cli db:seed:all` - Run all seeders
 - `npx sequelize-cli db:migrate:undo` - Undo last migration
 - `npx sequelize-cli db:seed:undo:all` - Undo all seeders
+
+---
+
+## Frontend
+
+### Technologies
+
+- **React** - UI library
+- **Vite** - Build tool and dev server
+- **Ant Design** - UI component library
+- **React Router** - Client-side routing
+- **Axios** - HTTP client
+- **Tailwind CSS** - Utility-first CSS framework
+- **Chart.js** - Data visualization
+
+### Project Structure
+
+```
+frontend/
+├── src/
+│   ├── api/            # API client functions
+│   ├── components/     # Reusable React components
+│   ├── contexts/       # React contexts (Auth, etc.)
+│   ├── layouts/        # Layout components
+│   ├── pages/          # Page components
+│   │   ├── admin/      # Admin pages
+│   │   ├── login/      # Authentication pages
+│   │   └── user/       # User pages
+│   ├── constants/      # Application constants
+│   ├── App.jsx         # Main App component
+│   └── main.jsx        # Entry point
+├── public/             # Static assets
+└── vite.config.js      # Vite configuration
+```
+
+### 1. Navigate to Frontend Directory
+
+```bash
+cd frontend
+```
+
+### 2. Install Dependencies
+
+```bash
+npm install
+```
+
+### 3. Configure Environment Variables
+
+Copy the `.env.example` file to `.env`:
+
+```bash
+cp .env.example .env
+```
+
+Then update `.env` with your backend API URL if needed:
+
+```env
+VITE_API_BASE_URL=http://localhost:3000/api
+```
+
+### 4. Start Development Server
+
+```bash
+npm run dev
+```
+
+Frontend will run on `http://localhost:5173` (or another port if 5173 is occupied)
+
+---
+
+### 📝 Available Scripts
+
+- `npm run dev` - Start development server with hot reload
+- `npm run build` - Build for production
+- `npm run preview` - Preview production build locally
+- `npm run lint` - Run ESLint to check code quality

@@ -1218,7 +1218,6 @@ function CommentModal({
                                 >
                                   <Button
                                     type="text"
-                                    icon={<UpOutlined />}
                                     size="small"
                                     onClick={() =>
                                       handleVote(comment.id, "upvote")
@@ -1231,8 +1230,25 @@ function CommentModal({
                                       padding: "4px 8px",
                                       height: "auto",
                                       fontSize: "12px",
+                                      border: "none",
+                                      outline: "none",
+                                      boxShadow: "none",
                                     }}
-                                  />
+                                    onMouseDown={(e) => e.preventDefault()}
+                                  >
+                                    <span
+                                      style={{
+                                        fontWeight:
+                                          userVote === "upvote"
+                                            ? "bold"
+                                            : "normal",
+                                        display: "inline-flex",
+                                        alignItems: "center",
+                                      }}
+                                    >
+                                      <UpOutlined />
+                                    </span>
+                                  </Button>
                                   <Text
                                     strong
                                     style={{
@@ -1251,7 +1267,6 @@ function CommentModal({
                                   </Text>
                                   <Button
                                     type="text"
-                                    icon={<DownOutlined />}
                                     size="small"
                                     onClick={() =>
                                       handleVote(comment.id, "downvote")
@@ -1264,8 +1279,25 @@ function CommentModal({
                                       padding: "4px 8px",
                                       height: "auto",
                                       fontSize: "12px",
+                                      border: "none",
+                                      outline: "none",
+                                      boxShadow: "none",
                                     }}
-                                  />
+                                    onMouseDown={(e) => e.preventDefault()}
+                                  >
+                                    <span
+                                      style={{
+                                        fontWeight:
+                                          userVote === "downvote"
+                                            ? "bold"
+                                            : "normal",
+                                        display: "inline-flex",
+                                        alignItems: "center",
+                                      }}
+                                    >
+                                      <DownOutlined />
+                                    </span>
+                                  </Button>
                                   <div
                                     style={{
                                       width: "1px",
@@ -1456,7 +1488,6 @@ function CommentModal({
                                                 >
                                                   <Button
                                                     type="text"
-                                                    icon={<UpOutlined />}
                                                     size="small"
                                                     onClick={() =>
                                                       handleVote(
@@ -1473,8 +1504,28 @@ function CommentModal({
                                                       padding: "2px 6px",
                                                       height: "auto",
                                                       fontSize: "11px",
+                                                      border: "none",
+                                                      outline: "none",
+                                                      boxShadow: "none",
                                                     }}
-                                                  />
+                                                    onMouseDown={(e) =>
+                                                      e.preventDefault()
+                                                    }
+                                                  >
+                                                    <span
+                                                      style={{
+                                                        fontWeight:
+                                                          replyUserVote ===
+                                                          "upvote"
+                                                            ? "bold"
+                                                            : "normal",
+                                                        display: "inline-flex",
+                                                        alignItems: "center",
+                                                      }}
+                                                    >
+                                                      <UpOutlined />
+                                                    </span>
+                                                  </Button>
                                                   <Text
                                                     strong
                                                     style={{
@@ -1495,7 +1546,6 @@ function CommentModal({
                                                   </Text>
                                                   <Button
                                                     type="text"
-                                                    icon={<DownOutlined />}
                                                     size="small"
                                                     onClick={() =>
                                                       handleVote(
@@ -1512,8 +1562,28 @@ function CommentModal({
                                                       padding: "2px 6px",
                                                       height: "auto",
                                                       fontSize: "11px",
+                                                      border: "none",
+                                                      outline: "none",
+                                                      boxShadow: "none",
                                                     }}
-                                                  />
+                                                    onMouseDown={(e) =>
+                                                      e.preventDefault()
+                                                    }
+                                                  >
+                                                    <span
+                                                      style={{
+                                                        fontWeight:
+                                                          replyUserVote ===
+                                                          "downvote"
+                                                            ? "bold"
+                                                            : "normal",
+                                                        display: "inline-flex",
+                                                        alignItems: "center",
+                                                      }}
+                                                    >
+                                                      <DownOutlined />
+                                                    </span>
+                                                  </Button>
                                                 </div>
                                               </div>
                                             </div>

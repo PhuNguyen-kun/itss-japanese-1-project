@@ -1,26 +1,4 @@
-import axios from "axios";
-
-const API_BASE_URL = "http://localhost:3000/api";
-
-// Create axios instance with default config
-const apiClient = axios.create({
-  baseURL: API_BASE_URL,
-  timeout: 10000,
-});
-
-// Request interceptor to add auth token
-apiClient.interceptors.request.use(
-  (config) => {
-    const token = localStorage.getItem("token");
-    if (token) {
-      config.headers.Authorization = `Bearer ${token}`;
-    }
-    return config;
-  },
-  (error) => {
-    return Promise.reject(error);
-  }
-);
+import { apiClient } from "./axiosConfig";
 
 const documentApi = {
   /**
@@ -95,8 +73,11 @@ const documentApi = {
    * Download a document
    */
   download: (fileUrl) => {
-    const baseURL = apiClient.defaults.baseURL.replace("/api", "");
-    return `${baseURL}${fileUrl}`;
+    // Get base URL from environment or use default
+    const envBaseURL =
+      import.meta.env.VITE_API_BASE_URL || "http://localhost:3000/api";
+    const serverBaseURL = envBaseURL.replace("/api", "");
+    return `${serverBaseURL}${fileUrl}`;
   },
 };
 
