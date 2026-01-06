@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from "react";
 import { Card, Typography, Spin, message, Button } from "antd";
 import { PlusOutlined } from "@ant-design/icons";
+import { useLocation } from "react-router-dom";
 import DefaultLayout from "../../layouts/LayoutDefault";
 import StoryCard from "../../components/StoryCard";
 import CommentModal from "../../components/CommentModal";
@@ -13,6 +14,7 @@ const { Title } = Typography;
 
 function Story() {
   const { user } = useAuth();
+  const location = useLocation();
   const [stories, setStories] = useState([]);
   const [loading, setLoading] = useState(true);
   const [selectedStory, setSelectedStory] = useState(null);
@@ -21,12 +23,23 @@ function Story() {
   const [editModalVisible, setEditModalVisible] = useState(false);
   const [storyToEdit, setStoryToEdit] = useState(null);
   const [savedStoryIds, setSavedStoryIds] = useState(new Set());
+  const [initialTopic, setInitialTopic] = useState(null);
 
   useEffect(() => {
     if (user?.id) {
       loadStories();
     }
   }, [user]);
+
+  // Check location state for topic notification
+  useEffect(() => {
+    if (location.state?.openCreateModal && location.state?.topic) {
+      setInitialTopic(location.state.topic);
+      setCreateModalVisible(true);
+      // Clear location state to prevent reopening on refresh
+      window.history.replaceState({}, document.title);
+    }
+  }, [location.state]);
 
   const loadStories = async () => {
     if (!user?.id) return;
@@ -148,6 +161,30 @@ function Story() {
     );
   };
 
+  const handleReactionUpdate = (storyId, reactionsCount, reactions) => {
+    // Update reactions count and reactions array in local state
+    setStories((prevStories) =>
+      prevStories.map((s) =>
+        s.id === storyId
+          ? {
+              ...s,
+              reactions_count: reactionsCount,
+              reactions: reactions || s.reactions,
+            }
+          : s
+      )
+    );
+    
+    // Also update selectedStory if it's the same story
+    if (selectedStory && selectedStory.id === storyId) {
+      setSelectedStory((prev) => ({
+        ...prev,
+        reactions_count: reactionsCount,
+        reactions: reactions || prev.reactions,
+      }));
+    }
+  };
+
   const handleCreateSuccess = () => {
     setCreateModalVisible(false);
     loadStories();
@@ -159,11 +196,22 @@ function Story() {
     setEditModalVisible(true);
   };
 
-  const handleEditSuccess = () => {
+  const handleEditSuccess = async () => {
+    // Save current scroll position
+    const currentScrollY = window.scrollY;
+    
     setEditModalVisible(false);
     setStoryToEdit(null);
-    loadStories();
+    
+    // Wait for loadStories to complete before restoring scroll
+    await loadStories();
     message.success("ストーリーを更新しました");
+    
+    // Restore scroll position after reload completes
+    // Use setTimeout to ensure DOM has updated
+    setTimeout(() => {
+      window.scrollTo(0, currentScrollY);
+    }, 100);
   };
 
   const handleSaveToggle = async (story) => {
@@ -186,6 +234,10 @@ function Story() {
     } catch (error) {
       message.error(isSaved ? "保存解除に失敗しました" : "保存に失敗しました");
     }
+  };
+
+  const handleStoryDelete = (storyId) => {
+    setStories((prev) => prev.filter((s) => s.id !== storyId));
   };
 
   return (
@@ -240,6 +292,7 @@ function Story() {
                 }
                 onEditClick={handleEditClick}
                 onSaveToggle={handleSaveToggle}
+                onDelete={handleStoryDelete}
                 isSaved={savedStoryIds.has(story.id)}
               />
             ))}
@@ -252,13 +305,18 @@ function Story() {
           story={selectedStory}
           onClose={handleModalClose}
           onUpdate={handleCommentUpdate}
+          onReactionUpdate={handleReactionUpdate}
         />
 
         {/* Create Story Modal */}
         <CreateStoryModal
           visible={createModalVisible}
-          onClose={() => setCreateModalVisible(false)}
+          onClose={() => {
+            setCreateModalVisible(false);
+            setInitialTopic(null);
+          }}
           onSuccess={handleCreateSuccess}
+          initialTopic={initialTopic}
         />
 
         {/* Edit Story Modal */}

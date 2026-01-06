@@ -41,8 +41,8 @@ class NotificationService {
       distinct: true,
     });
 
-    // Manually fetch related stories for notifications
-    const notificationsWithStories = await Promise.all(
+    // Manually fetch related entities for notifications
+    const notificationsWithEntities = await Promise.all(
       rows.map(async (notification) => {
         const notificationData = notification.toJSON();
 
@@ -59,13 +59,39 @@ class NotificationService {
           }
         }
 
+        // Fetch document if entity_type is 'document'
+        if (notification.entity_type === "document") {
+          try {
+            const document = await db.Document.findByPk(notification.entity_id, {
+              attributes: ["id", "title", "description"],
+            });
+            notificationData.document = document;
+          } catch (error) {
+            console.error("Error fetching document:", error);
+            notificationData.document = null;
+          }
+        }
+
+        // Fetch topic if entity_type is 'topic'
+        if (notification.entity_type === "topic") {
+          try {
+            const topic = await db.Topic.findByPk(notification.entity_id, {
+              attributes: ["id", "name", "description"],
+            });
+            notificationData.topic = topic;
+          } catch (error) {
+            console.error("Error fetching topic:", error);
+            notificationData.topic = null;
+          }
+        }
+
         return notificationData;
       })
     );
 
     const pagination = getPaginationMeta(count, page, per_page);
 
-    return { notifications: notificationsWithStories, pagination };
+    return { notifications: notificationsWithEntities, pagination };
   }
 
   /**

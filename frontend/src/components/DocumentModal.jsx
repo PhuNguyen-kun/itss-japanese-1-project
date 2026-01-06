@@ -1,14 +1,14 @@
 import React, { useState, useEffect } from "react";
 import {
-  Card,
+  Modal,
   Avatar,
   Typography,
   Space,
   Button,
   Tag,
   Dropdown,
-  Modal,
   message,
+  Modal as ConfirmModal,
 } from "antd";
 import {
   DownloadOutlined,
@@ -41,20 +41,33 @@ const formatJapaneseDateTime = (date) => {
 
 const { Text, Paragraph } = Typography;
 
-function DocumentCard({ document, onCommentClick, onReactionClick, onDelete }) {
+function DocumentModal({ visible, document, onClose, onUpdate, onDelete }) {
   const { user } = useAuth();
   const navigate = useNavigate();
   const [isSaved, setIsSaved] = useState(false);
-  const [savedCount, setSavedCount] = useState(document.saved_count || 0);
+  const [savedCount, setSavedCount] = useState(document?.saved_count || 0);
+  const [documentData, setDocumentData] = useState(document);
 
   useEffect(() => {
-    checkIfSaved();
-    if (document.saved_count !== undefined) {
-      setSavedCount(document.saved_count);
+    if (visible && document) {
+      setDocumentData(document);
+      // Update saved count from document data
+      if (document.saved_count !== undefined && document.saved_count !== null) {
+        setSavedCount(document.saved_count);
+      }
+      checkIfSaved();
     }
-  }, [document.id, document.saved_count]);
+  }, [visible, document]);
+
+  // Update saved count when documentData changes
+  useEffect(() => {
+    if (documentData?.saved_count !== undefined && documentData?.saved_count !== null) {
+      setSavedCount(documentData.saved_count);
+    }
+  }, [documentData?.saved_count]);
 
   const checkIfSaved = async () => {
+    if (!document?.id) return;
     try {
       const response = await documentApi.getSaved({ limit: 100, page: 1 });
 
@@ -73,17 +86,19 @@ function DocumentCard({ document, onCommentClick, onReactionClick, onDelete }) {
   };
 
   const getAuthorName = () => {
-    if (document.uploader) {
+    if (documentData?.uploader) {
       return (
-        document.uploader.username ||
-        `${document.uploader.first_name} ${document.uploader.last_name}`
+        documentData.uploader.username ||
+        `${documentData.uploader.first_name} ${documentData.uploader.last_name}`
       );
     }
     return "Unknown";
   };
 
   const getTimeAgo = () => {
-    return formatJapaneseDateTime(document.created_at || document.createdAt);
+    return formatJapaneseDateTime(
+      documentData?.created_at || documentData?.createdAt
+    );
   };
 
   const getFileIcon = (fileType) => {
@@ -140,17 +155,39 @@ function DocumentCard({ document, onCommentClick, onReactionClick, onDelete }) {
   };
 
   const handleSaveToggle = async () => {
+    if (!documentData?.id) return;
     try {
       if (isSaved) {
-        await documentApi.unsave(document.id);
+        await documentApi.unsave(documentData.id);
         setIsSaved(false);
-        setSavedCount((prev) => Math.max(0, prev - 1));
         message.success("保存を解除しました");
       } else {
-        await documentApi.save(document.id);
+        await documentApi.save(documentData.id);
         setIsSaved(true);
-        setSavedCount((prev) => prev + 1);
         message.success("ドキュメントを保存しました");
+      }
+      
+      // Reload document to get updated saved_count
+      try {
+        const response = await documentApi.getById(documentData.id);
+        if (response.data) {
+          setDocumentData(response.data);
+          if (response.data.saved_count !== undefined && response.data.saved_count !== null) {
+            setSavedCount(response.data.saved_count);
+          }
+        }
+      } catch (error) {
+        console.error("Failed to reload document:", error);
+        // Fallback: update count manually
+        if (isSaved) {
+          setSavedCount((prev) => Math.max(0, prev - 1));
+        } else {
+          setSavedCount((prev) => prev + 1);
+        }
+      }
+      
+      if (onUpdate) {
+        onUpdate();
       }
     } catch (error) {
       message.error("操作に失敗しました");
@@ -159,7 +196,7 @@ function DocumentCard({ document, onCommentClick, onReactionClick, onDelete }) {
   };
 
   const handleDelete = () => {
-    Modal.confirm({
+    ConfirmModal.confirm({
       title: "ドキュメントを削除しますか？",
       content: "この操作は取り消せません。",
       okText: "削除",
@@ -167,11 +204,12 @@ function DocumentCard({ document, onCommentClick, onReactionClick, onDelete }) {
       okButtonProps: { danger: true },
       onOk: async () => {
         try {
-          await documentApi.delete(document.id);
+          await documentApi.delete(documentData.id);
           message.success("ドキュメントを削除しました");
           if (onDelete) {
-            onDelete(document.id);
+            onDelete(documentData.id);
           }
+          onClose();
         } catch (error) {
           message.error("削除に失敗しました");
         }
@@ -179,10 +217,19 @@ function DocumentCard({ document, onCommentClick, onReactionClick, onDelete }) {
     });
   };
 
+  if (!documentData) return null;
+
   return (
-    <Card
-      className="rounded-2xl shadow-sm border border-gray-200 mb-4"
-      style={{ marginBottom: "16px" }}
+    <Modal
+      title="資料"
+      open={visible}
+      onCancel={onClose}
+      footer={null}
+      width={800}
+      style={{ top: 20 }}
+      destroyOnClose={false}
+      getContainer={() => document?.body || false}
+      maskClosable={true}
     >
       <div
         style={{
@@ -195,12 +242,14 @@ function DocumentCard({ document, onCommentClick, onReactionClick, onDelete }) {
         <Avatar
           size={48}
           src={
-            document.uploader?.avatar_url
-              ? `http://localhost:3000${document.uploader.avatar_url}`
+            documentData.uploader?.avatar_url
+              ? `http://localhost:3000${documentData.uploader.avatar_url}`
               : null
           }
           icon={
-            !document.uploader?.avatar_url && <span>{getAuthorName()[0]}</span>
+            !documentData.uploader?.avatar_url && (
+              <span>{getAuthorName()[0]}</span>
+            )
           }
           style={{
             backgroundColor: "#e5e7eb",
@@ -208,7 +257,7 @@ function DocumentCard({ document, onCommentClick, onReactionClick, onDelete }) {
             cursor: "pointer",
           }}
           onClick={() => {
-            const uploaderId = document.uploader?.id || document.user_id;
+            const uploaderId = documentData.uploader?.id || documentData.user_id;
             if (uploaderId) {
               navigate(`/profile/${uploaderId}`);
             }
@@ -243,7 +292,8 @@ function DocumentCard({ document, onCommentClick, onReactionClick, onDelete }) {
                   cursor: "pointer",
                 }}
                 onClick={() => {
-                  const uploaderId = document.uploader?.id || document.user_id;
+                  const uploaderId =
+                    documentData.uploader?.id || documentData.user_id;
                   if (uploaderId) {
                     navigate(`/profile/${uploaderId}`);
                   }
@@ -263,16 +313,16 @@ function DocumentCard({ document, onCommentClick, onReactionClick, onDelete }) {
               >
                 {getTimeAgo()}
               </Text>
-              {document.category && (
+              {documentData.category && (
                 <div style={{ marginTop: 8, textAlign: "left" }}>
                   <Tag color="green" style={{ fontSize: "12px" }}>
-                    {document.category.name}
+                    {documentData.category.name}
                   </Tag>
                 </div>
               )}
             </div>
-            {(document.uploader?.id === user?.id ||
-              document.user_id === user?.id) && (
+            {(documentData.uploader?.id === user?.id ||
+              documentData.user_id === user?.id) && (
               <Dropdown
                 menu={{
                   items: [
@@ -307,13 +357,13 @@ function DocumentCard({ document, onCommentClick, onReactionClick, onDelete }) {
             className="flex items-center gap-2 mb-2"
             style={{ textAlign: "left", justifyContent: "flex-start" }}
           >
-            {getFileIcon(document.file_type)}
+            {getFileIcon(documentData.file_type)}
             <Text strong style={{ fontSize: 16, textAlign: "left" }}>
-              {document.title}
+              {documentData.title}
             </Text>
           </div>
 
-          {document.description && (
+          {documentData.description && (
             <Paragraph
               style={{
                 marginBottom: 16,
@@ -323,17 +373,17 @@ function DocumentCard({ document, onCommentClick, onReactionClick, onDelete }) {
                 textAlign: "left",
               }}
             >
-              {document.description}
+              {documentData.description}
             </Paragraph>
           )}
 
           <div className="mb-3" style={{ textAlign: "left" }}>
-            <Tag color="blue">{document.file_type?.toUpperCase()}</Tag>
+            <Tag color="blue">{documentData.file_type?.toUpperCase()}</Tag>
             <Text
               type="secondary"
               style={{ fontSize: 12, marginLeft: 8, textAlign: "left" }}
             >
-              {document.file_name}
+              {documentData.file_name}
             </Text>
           </div>
 
@@ -344,20 +394,20 @@ function DocumentCard({ document, onCommentClick, onReactionClick, onDelete }) {
                 icon={<EyeOutlined />}
                 size="small"
                 onClick={() =>
-                  handleView(document.file_url, document.file_type)
+                  handleView(documentData.file_url, documentData.file_type)
                 }
                 title={
-                  document.file_type?.toLowerCase() === "pdf"
+                  documentData.file_type?.toLowerCase() === "pdf"
                     ? "表示"
                     : "プレビュー不可"
                 }
-                disabled={document.file_type?.toLowerCase() !== "pdf"}
+                disabled={documentData.file_type?.toLowerCase() !== "pdf"}
                 style={{
                   border: "none",
                   outline: "none",
                   boxShadow: "none",
                   color:
-                    document.file_type?.toLowerCase() === "pdf"
+                    documentData.file_type?.toLowerCase() === "pdf"
                       ? undefined
                       : "#d9d9d9",
                 }}
@@ -369,9 +419,9 @@ function DocumentCard({ document, onCommentClick, onReactionClick, onDelete }) {
                 size="small"
                 onClick={() =>
                   handleDownload(
-                    document.file_url,
-                    document.file_name,
-                    document.file_type
+                    documentData.file_url,
+                    documentData.file_name,
+                    documentData.file_type
                   )
                 }
                 title="ダウンロード"
@@ -403,8 +453,9 @@ function DocumentCard({ document, onCommentClick, onReactionClick, onDelete }) {
           </div>
         </div>
       </div>
-    </Card>
+    </Modal>
   );
 }
 
-export default DocumentCard;
+export default DocumentModal;
+

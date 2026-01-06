@@ -4,6 +4,8 @@ const {
   getPaginationParams,
   getPaginationMeta,
 } = require("../utils/pagination");
+const notificationService = require("./notificationService");
+const followService = require("./followService");
 
 class StoryService {
   async getAll(query = {}) {
@@ -172,7 +174,34 @@ class StoryService {
       user_id: userId,
     });
 
-    return await this.getById(story.id);
+    // Get story with author info for notification
+    const createdStory = await this.getById(story.id);
+    const author = createdStory.author;
+
+    // Create notifications for followers
+    try {
+      const followersResult = await followService.getFollowers(userId, { page: 1, per_page: 1000 });
+      const followers = followersResult.followers || [];
+
+      // Create notification for each follower
+      await Promise.all(
+        followers.map(async (follower) => {
+          await notificationService.createNotification({
+            user_id: follower.id,
+            actor_id: userId,
+            type: "user_posted_story",
+            entity_type: "story",
+            entity_id: story.id,
+            message: `${author.first_name} ${author.last_name}さんが新しいストーリーを投稿しました`,
+          });
+        })
+      );
+    } catch (error) {
+      // Log error but don't fail story creation
+      console.error("Failed to create notifications for followers:", error);
+    }
+
+    return createdStory;
   }
 
   async update(id, storyData, userId) {

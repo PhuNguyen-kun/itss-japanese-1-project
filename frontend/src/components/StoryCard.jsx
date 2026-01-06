@@ -7,6 +7,7 @@ import {
   Button,
   Tag,
   Dropdown,
+  Modal,
   message,
 } from "antd";
 import {
@@ -20,9 +21,11 @@ import {
   EllipsisOutlined,
   SaveOutlined,
   DownloadOutlined,
+  DeleteOutlined,
 } from "@ant-design/icons";
 import { useNavigate } from "react-router-dom";
 import { useAuth } from "../contexts/AuthContext";
+import { storyApi } from "../api";
 import ReactionPicker from "./ReactionPicker";
 import ImageViewer from "./ImageViewer";
 // Date formatting helper - Japanese format: 2025年12月25日 16:20:57
@@ -74,6 +77,7 @@ function StoryCard({
   onReactionClick,
   onEditClick,
   onSaveToggle,
+  onDelete,
   isSaved,
 }) {
   const { user } = useAuth();
@@ -182,7 +186,28 @@ function StoryCard({
     images.forEach((imageUrl, index) => {
       setTimeout(() => {
         handleDownloadImage(imageUrl, index);
-      }, index * 200); // Delay each download by 200ms to avoid browser blocking
+      }, index * 200);
+    });
+  };
+
+  const handleDelete = () => {
+    Modal.confirm({
+      title: "投稿を削除しますか？",
+      content: "この操作は取り消せません。",
+      okText: "削除",
+      cancelText: "キャンセル",
+      okButtonProps: { danger: true },
+      onOk: async () => {
+        try {
+          await storyApi.delete(story.id);
+          message.success("投稿を削除しました");
+          if (onDelete) {
+            onDelete(story.id);
+          }
+        } catch (error) {
+          message.error("削除に失敗しました");
+        }
+      },
     });
   };
 
@@ -191,7 +216,14 @@ function StoryCard({
       className="rounded-2xl shadow-sm border border-gray-200 mb-4"
       style={{ marginBottom: "16px" }}
     >
-      <Space align="start" size="middle" className="w-full">
+      <div
+        style={{
+          display: "flex",
+          alignItems: "flex-start",
+          gap: "16px",
+          width: "100%",
+        }}
+      >
         <Avatar
           size={48}
           src={getAvatarUrl()}
@@ -209,7 +241,14 @@ function StoryCard({
           }}
         />
 
-        <div className="flex-1" style={{ minWidth: 0, textAlign: "left" }}>
+        <div
+          style={{
+            flex: 1,
+            minWidth: 0,
+            width: "100%",
+            textAlign: "left",
+          }}
+        >
           <div
             className="mt-2 mb-3"
             style={{
@@ -290,6 +329,18 @@ function StoryCard({
                         },
                       ]
                     : []),
+                  ...(story.author?.id === user?.id ||
+                  story.user_id === user?.id
+                    ? [
+                        {
+                          key: "delete",
+                          label: "削除",
+                          icon: <DeleteOutlined />,
+                          danger: true,
+                          onClick: handleDelete,
+                        },
+                      ]
+                    : []),
                 ],
               }}
               trigger={["click"]}
@@ -349,6 +400,7 @@ function StoryCard({
                     <div
                       style={{
                         width: "100%",
+                        maxWidth: "100%",
                         cursor: "pointer",
                       }}
                       onClick={() => {
@@ -361,6 +413,7 @@ function StoryCard({
                         alt={story.title}
                         style={{
                           width: "100%",
+                          maxWidth: "100%",
                           maxHeight: "500px",
                           objectFit: "contain",
                           borderRadius: "12px",
@@ -380,6 +433,7 @@ function StoryCard({
                         gridTemplateColumns: "1fr 1fr",
                         gap: "2px",
                         width: "100%",
+                        maxWidth: "100%",
                       }}
                     >
                       {images.map((url, index) => (
@@ -422,6 +476,7 @@ function StoryCard({
                         gridTemplateRows: "repeat(2, 1fr)",
                         gap: "2px",
                         width: "100%",
+                        maxWidth: "100%",
                         height: "400px",
                       }}
                     >
@@ -490,6 +545,7 @@ function StoryCard({
                         gridTemplateRows: "1fr 1fr",
                         gap: "2px",
                         width: "100%",
+                        maxWidth: "100%",
                         height: "400px",
                       }}
                     >
@@ -538,6 +594,7 @@ function StoryCard({
                         gridTemplateRows: "1fr 1fr",
                         gap: "2px",
                         width: "100%",
+                        maxWidth: "100%",
                         height: "400px",
                       }}
                     >
@@ -601,7 +658,18 @@ function StoryCard({
                 }
               };
 
-              return <div className="mb-4">{getImageLayout()}</div>;
+              return (
+                <div
+                  className="mb-4"
+                  style={{
+                    width: "100%",
+                    maxWidth: "100%",
+                    overflow: "hidden",
+                  }}
+                >
+                  {getImageLayout()}
+                </div>
+              );
             })()}
 
           {/* Reactions Count and Summary */}
@@ -621,10 +689,6 @@ function StoryCard({
                         color={reactionColors[type]}
                         style={{
                           cursor: "pointer",
-                          border:
-                            reactionSummary.userReaction?.reaction_type === type
-                              ? "2px solid"
-                              : "none",
                           fontSize: "16px",
                           display: "flex",
                           alignItems: "center",
@@ -778,7 +842,7 @@ function StoryCard({
             </Button>
           </div>
         </div>
-      </Space>
+      </div>
 
       {/* Image Viewer Modal */}
       <ImageViewer

@@ -76,6 +76,14 @@ export const authApi = {
     });
     return response.data;
   },
+
+  // Search users
+  searchUsers: async (query, limit = 10) => {
+    const response = await apiClient.get("/auth/users/search", {
+      params: { q: query, limit },
+    });
+    return response.data;
+  },
 };
 
 export default authApi;

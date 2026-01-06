@@ -5,6 +5,8 @@ const {
   getPaginationMeta,
 } = require("../utils/pagination");
 const { Op } = require("sequelize");
+const notificationService = require("./notificationService");
+const followService = require("./followService");
 
 class DocumentService {
   async uploadDocument(userId, data, file) {
@@ -22,7 +24,33 @@ class DocumentService {
       file_size: file.size,
     });
 
-    return this.getDocumentById(document.id);
+    const createdDocument = await this.getDocumentById(document.id);
+    const uploader = createdDocument.uploader;
+
+    // Create notifications for followers
+    try {
+      const followersResult = await followService.getFollowers(userId, { page: 1, per_page: 1000 });
+      const followers = followersResult.followers || [];
+
+      // Create notification for each follower
+      await Promise.all(
+        followers.map(async (follower) => {
+          await notificationService.createNotification({
+            user_id: follower.id,
+            actor_id: userId,
+            type: "user_posted_document",
+            entity_type: "document",
+            entity_id: document.id,
+            message: `${uploader.first_name} ${uploader.last_name}さんが新しい資料をアップロードしました`,
+          });
+        })
+      );
+    } catch (error) {
+      // Log error but don't fail document upload
+      console.error("Failed to create notifications for followers:", error);
+    }
+
+    return createdDocument;
   }
 
   async getDocuments(query = {}) {
@@ -151,7 +179,16 @@ class DocumentService {
       throw new NotFoundError("Document not found");
     }
 
-    return document;
+    // Get saved count
+    const savedCount = await db.SavedDocument.count({
+      where: { document_id: documentId },
+    });
+
+    const documentJson = document.toJSON();
+    return {
+      ...documentJson,
+      saved_count: savedCount,
+    };
   }
 
   async deleteDocument(documentId, userId) {
@@ -169,7 +206,15 @@ class DocumentService {
   }
 
   async saveDocument(documentId, userId) {
-    const document = await db.Document.findByPk(documentId);
+    const document = await db.Document.findByPk(documentId, {
+      include: [
+        {
+          model: db.User,
+          as: "uploader",
+          attributes: ["id", "first_name", "last_name", "username"],
+        },
+      ],
+    });
 
     if (!document) {
       throw new NotFoundError("Document not found");
@@ -187,6 +232,28 @@ class DocumentService {
       user_id: userId,
       document_id: documentId,
     });
+
+    // Create notification for document owner when someone saves their document
+    // Only notify if the saver is not the document owner
+    if (document.user_id !== userId) {
+      try {
+        const saver = await db.User.findByPk(userId, {
+          attributes: ["id", "first_name", "last_name", "username"],
+        });
+
+        await notificationService.createNotification({
+          user_id: document.user_id,
+          actor_id: userId,
+          type: "user_saved_document",
+          entity_type: "document",
+          entity_id: documentId,
+          message: `${saver.first_name} ${saver.last_name}さんがあなたの資料を保存しました`,
+        });
+      } catch (error) {
+        // Log error but don't fail save operation
+        console.error("Failed to create notification for document owner:", error);
+      }
+    }
 
     return saved;
   }

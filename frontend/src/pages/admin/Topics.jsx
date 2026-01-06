@@ -272,11 +272,12 @@ function Topics() {
       key: "actions",
       width: "20%",
       render: (_, record) => (
-        <Space>
+        <Space size="small">
           <Button
             type="link"
             icon={<EyeOutlined />}
             onClick={() => handleViewTopic(record.id)}
+            style={{ padding: "0 4px" }}
           >
             表示
           </Button>
@@ -284,6 +285,7 @@ function Topics() {
             type="link"
             icon={<EditOutlined />}
             onClick={() => handleEditTopic(record.id)}
+            style={{ padding: "0 4px" }}
           >
             編集
           </Button>
@@ -292,6 +294,7 @@ function Topics() {
             icon={<PushpinOutlined />}
             onClick={() => handleTogglePin(record.id, record.is_pinned)}
             danger={record.is_pinned}
+            style={{ padding: "0 4px" }}
           >
             {record.is_pinned ? "ピン解除" : "ピン留め"}
           </Button>
@@ -300,6 +303,7 @@ function Topics() {
             danger
             icon={<DeleteOutlined />}
             onClick={() => handleDeleteTopic(record.id)}
+            style={{ padding: "0 4px" }}
           >
             削除
           </Button>

@@ -1,0 +1,24 @@
+/* Override Ant Design Modal close button default hover styles */
+.ant-modal-close {
+  background: transparent !important;
+  border-radius: 4px !important;
+  transition: background-color 0.2s !important;
+}
+
+.ant-modal-close:hover {
+  background: transparent !important;
+}
+
+.ant-modal-close:focus {
+  background: transparent !important;
+}
+
+/* Custom close icon wrapper - override any default styles */
+.image-viewer-close-icon {
+  background: transparent !important;
+}
+
+.image-viewer-close-icon:hover {
+  background: rgba(255, 255, 255, 0.2) !important;
+}
+

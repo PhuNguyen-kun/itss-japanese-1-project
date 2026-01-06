@@ -16,11 +16,16 @@ import {
   CheckOutlined,
   MessageOutlined,
   HeartOutlined,
+  FileTextOutlined,
+  TagOutlined,
 } from "@ant-design/icons";
 import { useNavigate } from "react-router-dom";
 import DefaultLayout from "../../layouts/LayoutDefault";
-import { notificationApi } from "../../api";
+import { notificationApi, storyApi, documentApi } from "../../api";
 import { useAuth } from "../../contexts/AuthContext";
+import CommentModal from "../../components/CommentModal";
+import CreateStoryModal from "../../components/CreateStoryModal";
+import DocumentModal from "../../components/DocumentModal";
 
 const { Title, Text, Paragraph } = Typography;
 const { Option } = Select;
@@ -36,6 +41,10 @@ function Notifications() {
     per_page: 10,
     total: 0,
   });
+  const [commentModalVisible, setCommentModalVisible] = useState(false);
+  const [selectedStory, setSelectedStory] = useState(null);
+  const [documentModalVisible, setDocumentModalVisible] = useState(false);
+  const [selectedDocument, setSelectedDocument] = useState(null);
 
   useEffect(() => {
     loadNotifications();
@@ -93,9 +102,55 @@ function Notifications() {
       await handleMarkAsRead(notification.id);
     }
 
-    // Navigate to the related story
-    if (notification.entity_type === "story" && notification.entity_id) {
-      navigate(`/?storyId=${notification.entity_id}`);
+    // Handle different notification types
+    if (notification.type === "comment_on_story" || notification.type === "reaction_on_story") {
+      // Story notification: open CommentModal
+      if (notification.entity_type === "story" && notification.entity_id) {
+        try {
+          const response = await storyApi.getById(notification.entity_id);
+          setSelectedStory(response.data);
+          setCommentModalVisible(true);
+        } catch (error) {
+          message.error("ストーリーの読み込みに失敗しました");
+        }
+      }
+    } else if (notification.type === "user_posted_story") {
+      // User posted story: open CommentModal
+      if (notification.entity_type === "story" && notification.entity_id) {
+        try {
+          const response = await storyApi.getById(notification.entity_id);
+          setSelectedStory(response.data);
+          setCommentModalVisible(true);
+        } catch (error) {
+          message.error("ストーリーの読み込みに失敗しました");
+        }
+      }
+    } else if (
+      notification.type === "user_posted_document" ||
+      notification.type === "user_saved_document"
+    ) {
+      // User posted/saved document: open DocumentModal
+      if (notification.entity_type === "document" && notification.entity_id) {
+        try {
+          const response = await documentApi.getById(notification.entity_id);
+          setSelectedDocument(response.data);
+          setDocumentModalVisible(true);
+        } catch (error) {
+          message.error("資料の読み込みに失敗しました");
+        }
+      }
+    } else if (notification.type === "admin_created_topic") {
+      // Admin created topic: navigate to /stories and open CreateStoryModal with topic selected
+      if (notification.entity_type === "topic" && notification.topic) {
+        navigate("/stories", {
+          state: {
+            openCreateModal: true,
+            topic: notification.topic,
+          },
+        });
+      } else {
+        navigate("/stories");
+      }
     }
   };
 
@@ -109,6 +164,14 @@ function Notifications() {
         return <MessageOutlined style={{ color: "#1890ff" }} />;
       case "reaction_on_story":
         return <HeartOutlined style={{ color: "#ff4d4f" }} />;
+      case "user_posted_story":
+        return <MessageOutlined style={{ color: "#52c41a" }} />;
+      case "user_posted_document":
+        return <FileTextOutlined style={{ color: "#722ed1" }} />;
+      case "user_saved_document":
+        return <HeartOutlined style={{ color: "#eb2f96" }} />;
+      case "admin_created_topic":
+        return <TagOutlined style={{ color: "#fa8c16" }} />;
       default:
         return <BellOutlined />;
     }
@@ -258,6 +321,48 @@ function Notifications() {
                           </Text>
                         </div>
                       )}
+
+                      {notification.document && (
+                        <div
+                          style={{
+                            marginTop: 8,
+                            padding: 8,
+                            width: "fit-content",
+                            backgroundColor: "#f5f5f5",
+                            borderRadius: 4,
+                          }}
+                        >
+                          <Text
+                            type="secondary"
+                            style={{ fontSize: 12 }}
+                            ellipsis
+                          >
+                            {notification.document.title ||
+                              notification.document.description}
+                          </Text>
+                        </div>
+                      )}
+
+                      {notification.topic && (
+                        <div
+                          style={{
+                            marginTop: 8,
+                            padding: 8,
+                            width: "fit-content",
+                            backgroundColor: "#f5f5f5",
+                            borderRadius: 4,
+                          }}
+                        >
+                          <Text
+                            type="secondary"
+                            style={{ fontSize: 12 }}
+                            ellipsis
+                          >
+                            {notification.topic.name ||
+                              notification.topic.description}
+                          </Text>
+                        </div>
+                      )}
                     </div>
                   </Space>
                 </Card>
@@ -280,6 +385,34 @@ function Notifications() {
           </>
         )}
       </div>
+
+      {/* Comment Modal */}
+      <CommentModal
+        visible={commentModalVisible}
+        story={selectedStory}
+        onClose={() => {
+          setCommentModalVisible(false);
+          setSelectedStory(null);
+        }}
+        onUpdate={() => {
+          // Reload notifications if needed
+          loadNotifications();
+        }}
+      />
+
+      {/* Document Modal */}
+      <DocumentModal
+        visible={documentModalVisible}
+        document={selectedDocument}
+        onClose={() => {
+          setDocumentModalVisible(false);
+          setSelectedDocument(null);
+        }}
+        onUpdate={() => {
+          // Reload notifications if needed
+          loadNotifications();
+        }}
+      />
     </DefaultLayout>
   );
 }

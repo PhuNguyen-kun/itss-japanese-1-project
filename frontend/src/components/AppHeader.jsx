@@ -4,6 +4,7 @@ import { UserOutlined, BellOutlined } from "@ant-design/icons";
 import { useNavigate, useLocation } from "react-router-dom";
 import { useAuth } from "../contexts/AuthContext";
 import { notificationApi } from "../api";
+import UserSearch from "./UserSearch";
 
 const { Header } = Layout;
 const { Text } = Typography;
@@ -65,16 +66,31 @@ function AppHeader({ title = "ホーム" }) {
       <div className="flex items-center gap-4">
         <Space size="middle" align="center">
           {!isAdminRoute && (
-            <Badge count={unreadCount} offset={[-2, 2]}>
-              <BellOutlined
+            <>
+              <UserSearch />
+              <div
                 style={{
-                  fontSize: 20,
-                  cursor: "pointer",
-                  color: "#374151",
+                  display: "flex",
+                  alignItems: "center",
+                  justifyContent: "center",
+                  height: "100%",
                 }}
-                onClick={() => navigate("/notifications")}
-              />
-            </Badge>
+              >
+                <Badge count={unreadCount} offset={[-2, 2]}>
+                  <BellOutlined
+                    style={{
+                      fontSize: 20,
+                      cursor: "pointer",
+                      color: "#374151",
+                      display: "flex",
+                      alignItems: "center",
+                      justifyContent: "center",
+                    }}
+                    onClick={() => navigate("/notifications")}
+                  />
+                </Badge>
+              </div>
+            </>
           )}
           <div
             style={{

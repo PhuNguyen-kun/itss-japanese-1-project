@@ -34,11 +34,18 @@ module.exports = (sequelize, DataTypes) => {
         allowNull: false,
       },
       type: {
-        type: DataTypes.ENUM("comment_on_story", "reaction_on_story"),
+        type: DataTypes.ENUM(
+          "comment_on_story",
+          "reaction_on_story",
+          "user_posted_story",
+          "user_posted_document",
+          "user_saved_document",
+          "admin_created_topic"
+        ),
         allowNull: false,
       },
       entity_type: {
-        type: DataTypes.ENUM("story", "comment"),
+        type: DataTypes.ENUM("story", "comment", "document", "topic"),
         allowNull: false,
       },
       entity_id: {

@@ -12,6 +12,7 @@ router.post("/register", validateRegister, authController.register);
 router.post("/login", validateLogin, authController.login);
 router.post("/logout", authMiddleware, authController.logout);
 router.get("/me", authMiddleware, authController.getProfile);
+router.get("/users/search", authMiddleware, authController.searchUsers);
 router.get("/users/:id", authMiddleware, authController.getUserById);
 router.put("/profile", authMiddleware, authController.updateProfile);
 router.post("/avatar", authMiddleware, uploadAvatar, authController.uploadAvatar);

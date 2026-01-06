@@ -2,6 +2,7 @@ const db = require("../models");
 const { Op } = require("sequelize");
 const { NotFoundError } = require("../utils/ApiError");
 const { getPaginationMeta } = require("../utils/pagination");
+const notificationService = require("./notificationService");
 
 class AdminService {
   // Get dashboard statistics
@@ -586,6 +587,33 @@ class AdminService {
         },
       ],
     });
+
+    // Create notifications for all users when admin creates a topic
+    try {
+      const allUsers = await db.User.findAll({
+        where: {
+          id: { [Op.ne]: userId }, // Exclude the admin who created the topic
+        },
+        attributes: ["id"],
+      });
+
+      // Create notification for each user
+      await Promise.all(
+        allUsers.map(async (user) => {
+          await notificationService.createNotification({
+            user_id: user.id,
+            actor_id: userId,
+            type: "admin_created_topic",
+            entity_type: "topic",
+            entity_id: topic.id,
+            message: `新しいトピック「${name}」が作成されました。ストーリーを投稿してみませんか？`,
+          });
+        })
+      );
+    } catch (error) {
+      // Log error but don't fail topic creation
+      console.error("Failed to create notifications for users:", error);
+    }
 
     return createdTopic.toJSON();
   }

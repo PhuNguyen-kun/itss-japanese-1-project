@@ -14,6 +14,7 @@ import { UserOutlined, EditOutlined, CameraOutlined } from "@ant-design/icons";
 import { useParams, useNavigate } from "react-router-dom";
 import DefaultLayout from "../../layouts/LayoutDefault";
 import StoryCard from "../../components/StoryCard";
+import DocumentCard from "../../components/DocumentCard";
 import CommentModal from "../../components/CommentModal";
 import EditStoryModal from "../../components/EditStoryModal";
 import FollowersModal from "../../components/FollowersModal";
@@ -24,6 +25,7 @@ import {
   reactionApi,
   savedStoryApi,
   followApi,
+  documentApi,
 } from "../../api";
 import { useAuth } from "../../contexts/AuthContext";
 
@@ -37,7 +39,9 @@ function Profile() {
   const [profileUser, setProfileUser] = useState(null);
   const [loading, setLoading] = useState(true);
   const [stories, setStories] = useState([]);
+  const [documents, setDocuments] = useState([]);
   const [savedStories, setSavedStories] = useState([]);
+  const [savedDocuments, setSavedDocuments] = useState([]);
   const [activeTab, setActiveTab] = useState("posts");
   const [selectedStory, setSelectedStory] = useState(null);
   const [modalVisible, setModalVisible] = useState(false);
@@ -63,8 +67,10 @@ function Profile() {
     if (profileUser) {
       if (activeTab === "posts") {
         loadUserStories();
+        loadUserDocuments();
       } else if (activeTab === "saved") {
         loadSavedStories();
+        loadSavedDocuments();
       }
     }
   }, [activeTab, profileUser]);
@@ -126,22 +132,66 @@ function Profile() {
     }
   };
 
+  const loadUserDocuments = async () => {
+    if (!profileUser) return;
+    try {
+      // If viewing own profile, use getMy, otherwise filter from getAll
+      let documentsData;
+      if (isOwnProfile) {
+        const response = await documentApi.getMy();
+        documentsData = response.data || [];
+      } else {
+        // For other users, get all and filter by user_id
+        const allDocsResponse = await documentApi.getAll({ limit: 1000 });
+        const allDocs = allDocsResponse.data || [];
+        documentsData = allDocs.filter(
+          (doc) => doc.uploader?.id === profileUser.id || doc.user_id === profileUser.id
+        );
+      }
+      setDocuments(documentsData);
+    } catch (error) {
+      console.error("Failed to load documents:", error);
+      // Don't show error message for documents as it's secondary
+    }
+  };
+
   const loadSavedStories = async () => {
     if (!isOwnProfile) return;
     setStoriesLoading(true);
     try {
       const response = await savedStoryApi.getAll();
       const savedStoriesData = response.data?.saved_stories || [];
-      const storiesData = savedStoriesData.map((item) => item.story);
+      // Filter out null stories (stories that may have been deleted)
+      const storiesData = savedStoriesData
+        .map((item) => item.story)
+        .filter((story) => story !== null && story !== undefined);
       setSavedStories(storiesData);
 
       // All stories in this tab are saved
-      const savedIds = new Set(storiesData.map((story) => story.id));
+      const savedIds = new Set(
+        storiesData.map((story) => story.id).filter((id) => id !== null && id !== undefined)
+      );
       setSavedStoryIds(savedIds);
     } catch (error) {
       message.error("保存した投稿の読み込みに失敗しました");
     } finally {
       setStoriesLoading(false);
+    }
+  };
+
+  const loadSavedDocuments = async () => {
+    if (!isOwnProfile) return;
+    try {
+      const response = await documentApi.getSaved();
+      const savedDocsData = response.data || [];
+      // Filter out null documents (documents that may have been deleted)
+      const docsData = savedDocsData.filter(
+        (doc) => doc !== null && doc !== undefined
+      );
+      setSavedDocuments(docsData);
+    } catch (error) {
+      console.error("Failed to load saved documents:", error);
+      // Don't show error message for documents as it's secondary
     }
   };
 
@@ -252,11 +302,28 @@ function Profile() {
 
   const handleProfileUpdate = async () => {
     await loadProfile();
-    // Update current user context if editing own profile
     if (isOwnProfile) {
       const response = await authApi.getProfile();
       setUser(response.data);
     }
+  };
+
+  const handleStoryDelete = (storyId) => {
+    if (activeTab === "posts") {
+      setStories((prev) => prev.filter((s) => s.id !== storyId));
+    } else {
+      setSavedStories((prev) => prev.filter((s) => s.id !== storyId));
+    }
+    loadProfile();
+  };
+
+  const handleDocumentDelete = (documentId) => {
+    if (activeTab === "posts") {
+      setDocuments((prev) => prev.filter((d) => d.id !== documentId));
+    } else {
+      setSavedDocuments((prev) => prev.filter((d) => d.id !== documentId));
+    }
+    loadProfile();
   };
 
   const handleAvatarClick = () => {
@@ -551,7 +618,7 @@ function Profile() {
             centered
             style={{ marginBottom: 0 }}
           >
-            <TabPane tab="投稿" key="posts">
+            <TabPane tab="投稿・資料" key="posts">
               <div style={{ padding: "16px" }}>
                 {storiesLoading ? (
                   <div
@@ -563,23 +630,44 @@ function Profile() {
                   >
                     <Spin />
                   </div>
-                ) : stories.length === 0 ? (
+                ) : stories.length === 0 && documents.length === 0 ? (
                   <Empty
-                    description="まだ投稿がありません"
+                    description="まだ投稿・資料がありません"
                     style={{ padding: "40px 0" }}
                   />
                 ) : (
-                  stories.map((story) => (
-                    <StoryCard
-                      key={story.id}
-                      story={story}
-                      onCommentClick={handleCommentClick}
-                      onReactionClick={handleReactionClick}
-                      onEditClick={isOwnProfile ? handleEditClick : undefined}
-                      onSaveToggle={handleSaveToggle}
-                      isSaved={savedStoryIds.has(story.id)}
-                    />
-                  ))
+                  [...stories, ...documents]
+                    .sort((a, b) => {
+                      const dateA = new Date(a.created_at || a.createdAt || 0);
+                      const dateB = new Date(b.created_at || b.createdAt || 0);
+                      return dateB - dateA;
+                    })
+                    .map((item) => {
+                      // Check if it's a story (has content property) or document (has file_url)
+                      if (item.content !== undefined) {
+                        // It's a story
+                        return (
+                          <StoryCard
+                            key={`story-${item.id}`}
+                            story={item}
+                            onCommentClick={handleCommentClick}
+                            onReactionClick={handleReactionClick}
+                            onEditClick={isOwnProfile ? handleEditClick : undefined}
+                            onSaveToggle={handleSaveToggle}
+                            onDelete={isOwnProfile ? handleStoryDelete : undefined}
+                            isSaved={savedStoryIds.has(item.id)}
+                          />
+                        );
+                      } else {
+                        return (
+                          <DocumentCard
+                            key={`document-${item.id}`}
+                            document={item}
+                            onDelete={isOwnProfile ? handleDocumentDelete : undefined}
+                          />
+                        );
+                      }
+                    })
                 )}
               </div>
             </TabPane>
@@ -596,22 +684,47 @@ function Profile() {
                     >
                       <Spin />
                     </div>
-                  ) : savedStories.length === 0 ? (
+                  ) : savedStories.length === 0 && savedDocuments.length === 0 ? (
                     <Empty
-                      description="保存した投稿がありません"
+                      description="保存した投稿・資料がありません"
                       style={{ padding: "40px 0" }}
                     />
                   ) : (
-                    savedStories.map((story) => (
-                      <StoryCard
-                        key={story.id}
-                        story={story}
-                        onCommentClick={handleCommentClick}
-                        onReactionClick={handleReactionClick}
-                        onSaveToggle={handleSaveToggle}
-                        isSaved={true}
-                      />
-                    ))
+                    [...savedStories, ...savedDocuments]
+                      .sort((a, b) => {
+                        const dateA = new Date(
+                          a.created_at || a.createdAt || a.saved_at || 0
+                        );
+                        const dateB = new Date(
+                          b.created_at || b.createdAt || b.saved_at || 0
+                        );
+                        return dateB - dateA;
+                      })
+                      .map((item) => {
+                        // Check if it's a story (has content property) or document (has file_url)
+                        if (item.content !== undefined) {
+                          // It's a story
+                          return (
+                            <StoryCard
+                              key={`saved-story-${item.id}`}
+                              story={item}
+                              onCommentClick={handleCommentClick}
+                              onReactionClick={handleReactionClick}
+                              onSaveToggle={handleSaveToggle}
+                              onDelete={handleStoryDelete}
+                              isSaved={true}
+                            />
+                          );
+                        } else {
+                          return (
+                            <DocumentCard
+                              key={`saved-document-${item.id}`}
+                              document={item}
+                              onDelete={handleDocumentDelete}
+                            />
+                          );
+                        }
+                      })
                   )}
                 </div>
               </TabPane>

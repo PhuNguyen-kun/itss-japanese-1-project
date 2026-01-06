@@ -6,6 +6,7 @@ import {
   CloseOutlined,
   DownloadOutlined,
 } from "@ant-design/icons";
+import "./ImageViewer.css";
 
 function ImageViewer({ visible, images, initialIndex = 0, onClose }) {
   const [currentIndex, setCurrentIndex] = useState(initialIndex);
@@ -88,7 +89,48 @@ function ImageViewer({ visible, images, initialIndex = 0, onClose }) {
         minHeight: "80vh",
         position: "relative",
       }}
-      closeIcon={<CloseOutlined style={{ color: "#fff", fontSize: "24px" }} />}
+      styles={{
+        header: {
+          borderBottom: "none",
+          padding: 0,
+        },
+      }}
+      closeIcon={
+        <div
+          className="image-viewer-close-icon"
+          style={{
+            display: "inline-flex",
+            alignItems: "center",
+            justifyContent: "center",
+            width: "32px",
+            height: "32px",
+            borderRadius: "4px",
+            marginRight: "20px",
+            marginTop: "10px",
+            transition: "background-color 0.2s",
+            boxSizing: "border-box",
+          }}
+          onMouseEnter={(e) => {
+            e.currentTarget.style.backgroundColor = "rgba(255, 255, 255, 0.2)";
+          }}
+          onMouseLeave={(e) => {
+            e.currentTarget.style.backgroundColor = "transparent";
+          }}
+          onClick={(e) => {
+            e.stopPropagation();
+            onClose();
+          }}
+        >
+          <CloseOutlined
+            style={{
+              color: "#fff",
+              fontSize: "24px",
+              display: "block",
+              pointerEvents: "none",
+            }}
+          />
+        </div>
+      }
     >
       <div
         style={{

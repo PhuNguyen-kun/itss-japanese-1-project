@@ -5,7 +5,7 @@ import { storyApi, topicApi } from "../api";
 
 const { TextArea } = Input;
 
-function CreateStoryModal({ visible, onClose, onSuccess }) {
+function CreateStoryModal({ visible, onClose, onSuccess, initialTopic }) {
   const [title, setTitle] = useState("");
   const [content, setContent] = useState("");
   const [topicId, setTopicId] = useState(null);
@@ -18,8 +18,14 @@ function CreateStoryModal({ visible, onClose, onSuccess }) {
   useEffect(() => {
     if (visible) {
       loadTopics();
+      // Set initial topic if provided
+      if (initialTopic) {
+        setTopicId(initialTopic.id || initialTopic);
+      } else {
+        setTopicId(null);
+      }
     }
-  }, [visible]);
+  }, [visible, initialTopic]);
 
   const loadTopics = async () => {
     setLoadingTopics(true);
@@ -130,6 +136,13 @@ function CreateStoryModal({ visible, onClose, onSuccess }) {
     setImagePreviews([]);
     onClose();
   };
+
+  // Reset topic when modal closes
+  useEffect(() => {
+    if (!visible) {
+      setTopicId(null);
+    }
+  }, [visible]);
 
   return (
     <Modal

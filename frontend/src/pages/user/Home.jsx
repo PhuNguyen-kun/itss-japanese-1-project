@@ -34,8 +34,21 @@ function Home() {
           documentApi.getAll({ limit: 50 }),
           savedStoryApi.getAll(),
         ]);
-      setStories(storiesResponse.data || []);
-      setDocuments(documentsResponse.data || []);
+
+      // Filter out stories and documents of current user (show only social content)
+      const allStories = storiesResponse.data || [];
+      const allDocuments = documentsResponse.data || [];
+
+      const filteredStories = allStories.filter(
+        (story) => story.author?.id !== user?.id && story.user_id !== user?.id
+      );
+
+      const filteredDocuments = allDocuments.filter(
+        (doc) => doc.uploader?.id !== user?.id && doc.user_id !== user?.id
+      );
+
+      setStories(filteredStories);
+      setDocuments(filteredDocuments);
 
       // Extract saved story IDs
       const savedIds = new Set(
@@ -182,7 +195,15 @@ function Home() {
   const handleEditSuccess = () => {
     setEditModalVisible(false);
     setStoryToEdit(null);
-    loadData(); // Reload data to show updated story
+    loadData();
+  };
+
+  const handleStoryDelete = (storyId) => {
+    setStories((prev) => prev.filter((s) => s.id !== storyId));
+  };
+
+  const handleDocumentDelete = (documentId) => {
+    setDocuments((prev) => prev.filter((d) => d.id !== documentId));
   };
 
   return (
@@ -235,6 +256,7 @@ function Home() {
                           ? handleEditClick
                           : undefined
                       }
+                      onDelete={handleStoryDelete}
                     />
                   );
                 } else {
@@ -247,6 +269,7 @@ function Home() {
                       onReactionClick={(docObj, reactionType) =>
                         handleDocumentReactionClick(docObj, reactionType)
                       }
+                      onDelete={handleDocumentDelete}
                     />
                   );
                 }

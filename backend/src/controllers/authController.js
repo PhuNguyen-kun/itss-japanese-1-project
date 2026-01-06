@@ -60,6 +60,12 @@ class AuthController {
     const user = await authService.updateProfile(userId, { avatar_url: avatarUrl });
     return responseOk(res, user, "アバターを更新しました");
   });
+
+  searchUsers = asyncHandler(async (req, res) => {
+    const { q, limit } = req.query;
+    const users = await authService.searchUsers(q, parseInt(limit) || 10);
+    return responseOk(res, users, "Users retrieved successfully");
+  });
 }
 
 module.exports = new AuthController();

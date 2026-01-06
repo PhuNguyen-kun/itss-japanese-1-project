@@ -1,4 +1,5 @@
 const db = require("../models");
+const { Op } = require("sequelize");
 const JwtHelper = require("../utils/jwtHelper");
 const { USER_ROLES } = require("../constants");
 const {
@@ -174,6 +175,40 @@ class AuthService {
       followers_count: followersCount,
       following_count: followingCount,
     };
+  }
+
+  async searchUsers(query, limit = 10) {
+    if (!query || query.trim().length === 0) {
+      return [];
+    }
+
+    const searchTerm = query.trim();
+    const users = await db.User.findAll({
+      where: {
+        status: "active",
+        [Op.or]: [
+          { username: { [Op.like]: `%${searchTerm}%` } },
+          { first_name: { [Op.like]: `%${searchTerm}%` } },
+          { last_name: { [Op.like]: `%${searchTerm}%` } },
+          { email: { [Op.like]: `%${searchTerm}%` } },
+        ],
+      },
+      attributes: {
+        exclude: ["password"],
+      },
+      include: [
+        {
+          model: db.Department,
+          as: "department",
+          attributes: ["id", "name"],
+          required: false,
+        },
+      ],
+      limit: limit,
+      order: [["username", "ASC"]],
+    });
+
+    return users.map((user) => user.toJSON());
   }
 
   async updateProfile(userId, profileData) {
